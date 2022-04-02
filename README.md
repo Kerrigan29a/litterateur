@@ -1,6 +1,9 @@
 # Litterateur
 
-~~~ python main.py Version
+Copyright (c) 2022 Javier Escalada Gómez  
+All rights reserved.
+
+~~~ python main.py Prelude
 __version__ = '0.0.1'
 ~~~
 
@@ -268,12 +271,16 @@ def run(args):
 
 <!--
 ~~~ python main.py Main
+
+# Copyright (c) 2022 Javier Escalada Gómez
+# All rights reserved.
+
+# <<< Prelude >>>
+
 import re
 import sys
 import argparse
 import os.path
-
-# <<< Version >>>
 
 # <<< Code block patterns >>>
 
@@ -313,6 +320,10 @@ if __name__ == "__main__":
 ~~~
 
 ~~~ python script.py Main
+
+# Copyright (c) 2022 Javier Escalada Gómez
+# All rights reserved.
+
 from litterateur import main
 
 if __name__ == "__main__":

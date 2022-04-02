@@ -1,3 +1,6 @@
+# Copyright (c) 2022 Javier Escalada Gómez
+# All rights reserved.
+
 import re
 import sys
 

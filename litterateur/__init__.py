@@ -2,22 +2,26 @@
 # Command used: litterateur.py README.md
 
 
-#line README.md:271
+#line README.md:274
+
+# Copyright (c) 2022 Javier Escalada Gómez
+# All rights reserved.
+
+#line README.md:7
+__version__ = '0.0.1'
+#line README.md:279
+
 import re
 import sys
 import argparse
 import os.path
 
-#line README.md:4
-__version__ = '0.0.1'
-#line README.md:277
-
-#line README.md:22
+#line README.md:25
 FENCE = re.compile(r'( {0,3})(`{3,}|~{3,})(.*)')
 OPT = re.compile(r' *(\S+)')
-#line README.md:279
+#line README.md:286
 
-#line README.md:137
+#line README.md:140
 REF_PATTERN = re.compile(r'<<<(.+)>>>')
 PYTHON_REF_PATTERN = re.compile(r'( *)#[ \t]*' + REF_PATTERN.pattern)
 C_REF_PATTERN = re.compile(r'( *)//[ \t]*' + REF_PATTERN.pattern)
@@ -28,9 +32,9 @@ LANG_REF_PATTERNS = {
     "cpp": C_REF_PATTERN,
     "go": C_REF_PATTERN,
 }
-#line README.md:281
+#line README.md:288
 
-#line README.md:170
+#line README.md:173
 PYTHON_COMMENT_FORMAT = "# {0}"
 C_COMMENT_FORMAT = "// {0}"
 LANG_COMMENT_FORMATS = {
@@ -40,9 +44,9 @@ LANG_COMMENT_FORMATS = {
     "cpp": C_COMMENT_FORMAT,
     "go": C_COMMENT_FORMAT,
 }
-#line README.md:283
+#line README.md:290
 
-#line README.md:192
+#line README.md:195
 PYTHON_MAP_FORMAT = "#line {file}:{line}"
 C_MAP_FORMAT = "#line {line} {file}"
 GO_MAP_FORMAT = "//line {file}:{line}"
@@ -53,9 +57,9 @@ LANG_MAP_FORMATS = {
     "cpp": C_MAP_FORMAT,
     "go": GO_MAP_FORMAT,
 }
-#line README.md:285
+#line README.md:292
 
-#line README.md:40
+#line README.md:43
 def label_lines(f):
     is_code = False
     is_ignored_code = False
@@ -81,9 +85,9 @@ def label_lines(f):
             yield ("CODE", l, i+1)
         else:
             yield ("TEXT", l, i+1)
-#line README.md:287
+#line README.md:294
 
-#line README.md:70
+#line README.md:73
 def extract_blocks(lines):
     block = None
     block_indent = None
@@ -106,24 +110,24 @@ def extract_blocks(lines):
                 block_indent = None
             case ("CODE", raw_line, linenum):
                 block["txt"].append((linenum, raw_line.removeprefix(block_indent)))
-#line README.md:289
+#line README.md:296
 
-#line README.md:99
+#line README.md:102
 def index_blocks(blocks):
     index = {}
     for block in blocks:
         index[(block["filename"], block["desc"])] = block
     return index
-#line README.md:291
+#line README.md:298
 
-#line README.md:111
+#line README.md:114
 def walk_blocks(src_block, dst_blocks, input_filename):
 
-    #line README.md:184
+    #line README.md:187
     map_format = LANG_MAP_FORMATS[src_block["lang"]]
     def map(line):
         return map_format.format(file=input_filename, line=line+1) + "\n"
-    #line README.md:114
+    #line README.md:117
 
     src_lang = src_block["lang"]
     src_filename = src_block["filename"]
@@ -142,16 +146,16 @@ def walk_blocks(src_block, dst_blocks, input_filename):
             yield dst_indent + map(linenum)
         else:
             yield src_line
-#line README.md:293
+#line README.md:300
 
-#line README.md:161
+#line README.md:164
 def compose_warning_message(input, lang):
     comment_format = LANG_COMMENT_FORMATS[lang]
     yield comment_format.format(f"Code generated from {input}; DO NOT EDIT.") + "\n"
     yield comment_format.format(f"Command used: {' '.join(sys.argv)}") + "\n"
-#line README.md:295
+#line README.md:302
 
-#line README.md:210
+#line README.md:213
 class ParseError(Exception):
     pass
 
@@ -176,9 +180,9 @@ def parse_args():
         rename[old] = new
     args.rename = rename
     return args
-#line README.md:297
+#line README.md:304
     
-#line README.md:239
+#line README.md:242
 def run(args):
         print("Reading", args.input)
         with open(args.input, encoding=args.encoding) as f:
@@ -207,7 +211,7 @@ def run(args):
                         print(f"ERROR: {e}")
                         return 1
         return 0
-#line README.md:299
+#line README.md:306
 
 def main():
     try:

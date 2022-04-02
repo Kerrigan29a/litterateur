@@ -1,3 +1,6 @@
+# Copyright (c) 2022 Javier Escalada Gómez
+# All rights reserved.
+
 from setuptools import setup, find_packages
 from litterateur import __version__
 
@@ -10,7 +13,7 @@ setup(
     description='Quick-and-dirty "literate programming" tool to extract code from Markdown files',
     packages=find_packages(),    
     install_requires=[],
-    license='Unlicense',
+    license='BSD 3-Clause Clear License',
     entry_points={
         'console_scripts': [
             'litterateur=litterateur:main',
