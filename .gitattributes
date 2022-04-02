@@ -1,0 +1,15 @@
+# From: https://medium.com/@clarkbw/managing-generated-files-in-github-1f1989c09dfd
+
+# GitHub uses Linguist (https://github.com/github/linguist) to understand and
+# work with languages in repositories. So you can add Linguist options like
+# linguist-generated=true to your .gitattributes file which will suppress the
+# display of diffs in your pull requests.
+
+# The -diff option tells git to treat this file like a binary file. The diff
+# output will indicate that the file has changed but won't display the
+# differences.
+
+# The -merge option tells Git to treat merging like a binary, too. It will
+# accept the latest version and avoid any conflict resolution.
+
+literate.py    -diff -merge linguist-generated=true
