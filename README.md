@@ -104,7 +104,7 @@ def extract_blocks(lines):
 
 # Indexing code blocks
 
-The last step is to index the code blocks so that we can find them by their description.
+We also need to index the code blocks so that we can find them by their description.
 
 ~~~ python main.py index_blocks
 def index_blocks(blocks):
@@ -116,12 +116,12 @@ def index_blocks(blocks):
 
 # Walking blocks
 
-The last step to emit the code is to walk the blocks follow the links.
+The last step to emit the code is to walk the blocks following the links.
 
 ~~~ python main.py walk_blocks
 def walk_blocks(src_block, dst_blocks, input_filename):
 
-    # <<< write_line >>>
+    # <<< line_directive >>>
 
     src_lang = src_block["lang"]
     src_filename = src_block["filename"]
@@ -193,7 +193,7 @@ LANG_COMMENT_FORMATS = {
 
 # Mapping the generated code with the original Markdown file
 
-~~~ python main.py write_line
+~~~ python main.py line_directive
 line_format = LANG_LINE_FORMATS[src_block["lang"]]
 def line_directive(line):
     return line_format.format(file=input_filename, line=line+1) + "\n"
