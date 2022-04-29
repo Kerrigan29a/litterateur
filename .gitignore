@@ -12,4 +12,4 @@ __pycache__/
 .mypy_cache/
 
 # Other
-README.json
+*.md.json

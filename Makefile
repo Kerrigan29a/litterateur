@@ -11,7 +11,7 @@ distclean: clean
 	-rm -r litterateur
 	-rm -r *.egg-info
 	-rm -r build
-	-rm -r *.json
+	-rm -r *.md.json
 
 release: distclean build
 	git tag -a v$(VERSION) -m "Release version $(VERSION)"

@@ -1,6 +1,6 @@
 # Code generated from README.md; DO NOT EDIT.
 # Command used: litterateur.py README.md
-#line README.md:322
+#line README.md:321
 # -*- coding: utf-8 -*-
 #line README.md:4
 """
@@ -13,9 +13,9 @@ License: BSD 3-Clause Clear License
 
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __license__ = "BSD 3-Clause Clear License"
-#line README.md:324
+#line README.md:323
 
 import re
 import sys
@@ -26,7 +26,7 @@ import json
 #line README.md:33
 FENCE = re.compile(r'( {0,3})(`{3,}|~{3,})(.*)')
 OPT = re.compile(r' *(\S+)')
-#line README.md:332
+#line README.md:331
 
 #line README.md:124
 REF_PATTERN = re.compile(r'<<<(.+)>>>')
@@ -39,7 +39,7 @@ LANG_REF_PATTERNS = {
     "cpp": C_REF_PATTERN,
     "go": C_REF_PATTERN,
 }
-#line README.md:334
+#line README.md:333
 
 #line README.md:199
 PYTHON_COMMENT_FORMAT = "# {0}"
@@ -51,7 +51,7 @@ LANG_COMMENT_FORMATS = {
     "cpp": C_COMMENT_FORMAT,
     "go": C_COMMENT_FORMAT,
 }
-#line README.md:336
+#line README.md:335
 
 #line README.md:221
 PYTHON_MAP_FORMAT = "#line {file}:{line}"
@@ -64,7 +64,7 @@ LANG_LINE_FORMATS = {
     "cpp": C_MAP_FORMAT,
     "go": GO_MAP_FORMAT,
 }
-#line README.md:338
+#line README.md:337
 
 #line README.md:51
 def label_lines(f):
@@ -92,7 +92,7 @@ def label_lines(f):
             yield ("CODE", l, i+1)
         else:
             yield ("TEXT", l, i+1)
-#line README.md:340
+#line README.md:339
 
 #line README.md:81
 def extract_blocks(lines):
@@ -117,7 +117,7 @@ def extract_blocks(lines):
                 block_indent = None
             case ("CODE", raw_line, linenum):
                 block["txt"].append((linenum, raw_line.removeprefix(block_indent)))
-#line README.md:342
+#line README.md:341
 
 #line README.md:110
 def parse_references(blocks):
@@ -129,7 +129,7 @@ def parse_references(blocks):
                 indent, name = m.groups()
                 block["txt"][i] = (linenum, (indent, name.strip()))
         yield block
-#line README.md:344
+#line README.md:343
 
 #line README.md:142
 def index_blocks(blocks):
@@ -137,7 +137,7 @@ def index_blocks(blocks):
     for block in blocks:
         index[(block["filename"], block["desc"])] = block
     return index
-#line README.md:346
+#line README.md:345
 
 #line README.md:154
 def walk_blocks(src_block, dst_blocks, input_filename):
@@ -166,14 +166,14 @@ def walk_blocks(src_block, dst_blocks, input_filename):
             yield dst_indent + line_directive(linenum)
         else:
             yield src_line
-#line README.md:348
+#line README.md:347
 
 #line README.md:190
 def compose_warning_message(input, lang):
     comment_format = LANG_COMMENT_FORMATS[lang]
     yield comment_format.format(f"Code generated from {input}; DO NOT EDIT.") + "\n"
     yield comment_format.format(f"Command used: {' '.join(sys.argv)}") + "\n"
-#line README.md:350
+#line README.md:349
 
 #line README.md:239
 class ParseError(Exception):
@@ -202,7 +202,7 @@ def parse_args():
         rename[old] = new
     args.rename = rename
     return args
-#line README.md:352
+#line README.md:351
     
 #line README.md:270
 CRED = "\033[31m"
@@ -226,8 +226,7 @@ def run(args):
     with open(args.input, encoding=args.encoding) as f:
         blocks = index_blocks(parse_references(extract_blocks(label_lines(f))))
     if args.dump:
-        name, ext = os.path.splitext(args.input)
-        with open(name + ".json", "w", encoding=args.encoding) as f:
+        with open(args.input + ".json", "w", encoding=args.encoding) as f:
             tmp = {":".join(k): v for k, v in blocks.items()}
             json.dump(tmp, f, indent=2)
     for (filename, desc), block in blocks.items():
@@ -253,7 +252,7 @@ def run(args):
                     perror(e)
                     return 1
     return 0
-#line README.md:354
+#line README.md:353
 
 def main():
     try:

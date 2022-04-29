@@ -11,7 +11,7 @@ License: BSD 3-Clause Clear License
 
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __license__ = "BSD 3-Clause Clear License"
 ~~~
 
@@ -288,8 +288,7 @@ def run(args):
     with open(args.input, encoding=args.encoding) as f:
         blocks = index_blocks(parse_references(extract_blocks(label_lines(f))))
     if args.dump:
-        name, ext = os.path.splitext(args.input)
-        with open(name + ".json", "w", encoding=args.encoding) as f:
+        with open(args.input + ".json", "w", encoding=args.encoding) as f:
             tmp = {":".join(k): v for k, v in blocks.items()}
             json.dump(tmp, f, indent=2)
     for (filename, desc), block in blocks.items():
