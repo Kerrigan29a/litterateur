@@ -11,7 +11,7 @@ License: BSD 3-Clause Clear License
 
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 __license__ = "BSD 3-Clause Clear License"
 ~~~
 
@@ -117,7 +117,10 @@ def parse_references(blocks):
             linenum, line = block["txt"][i]
             if m := ref_pattern.match(line):
                 indent, name = m.groups()
-                block["txt"][i] = (linenum, (indent, make_ref(block["filename"], name.strip())))
+                block["txt"][i] = (linenum, {
+                    "indent": indent,
+                    "ref": make_ref(block["filename"], name.strip())
+                })
         yield block
 ~~~
 
@@ -163,17 +166,16 @@ def walk_blocks(src_block, dst_blocks, input_filename):
 
     yield line_directive(src_block["beg"])
     for linenum, src_line in src_block["txt"]:
-        if isinstance(src_line, tuple): 
-            dst_indent, dst_ref = src_line
-            dst_block = dst_blocks[dst_ref]
+        if isinstance(src_line, dict): 
+            dst_block = dst_blocks[src_line["ref"]]
             if dst_block == src_block:
                 raise ValueError(f"detected self-reference in {input_filename} at line {linenum}")
             dst_lang = dst_block["lang"]
             if src_lang != dst_lang:
                 raise ValueError(f"language mismatch: {src_lang} != {dst_lang}")
             for l in walk_blocks(dst_block, dst_blocks, input_filename):
-                yield dst_indent + l
-            yield dst_indent + line_directive(linenum)
+                yield src_line["indent"] + l
+            yield src_line["indent"] + line_directive(linenum)
         else:
             yield src_line
 ~~~
@@ -307,7 +309,7 @@ def run(args):
                 "width": 120,
                 "indent_hint": indent_hint,
             } if CustomJSONEncoder is not None else {}
-            json.dump(blocks, f, indent=2, **kwargs)
+            json.dump({"version": __version__, "blocks": blocks}, f, indent=2, **kwargs)
     for block in blocks.values():
         filename = block["filename"]
         desc = block["desc"]    
