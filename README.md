@@ -11,7 +11,7 @@ License: BSD 3-Clause Clear License
 
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 __license__ = "BSD 3-Clause Clear License"
 ~~~
 
@@ -290,7 +290,8 @@ def run(args):
     if args.dump:
         with open(args.input + ".json", "w", encoding=args.encoding) as f:
             tmp = {":".join(k): v for k, v in blocks.items()}
-            json.dump(tmp, f, indent=2)
+            kwargs = {"cls": CustomJSONEncoder, "width": 80} if CustomJSONEncoder else {}
+            json.dump(tmp, f, indent=2, **kwargs)
     for (filename, desc), block in blocks.items():
         if desc.lower() == "main":
             filename = args.rename.get(filename, filename)
@@ -326,6 +327,10 @@ import sys
 import argparse
 import os.path
 import json
+try:
+    from custom_json_encoder import CustomJSONEncoder
+except ImportError:
+    CustomJSONEncoder = None
 
 # <<< Code block patterns >>>
 
