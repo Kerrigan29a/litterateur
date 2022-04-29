@@ -6,12 +6,12 @@ Quick-and-dirty "literate programming" tool to extract code from Markdown files
 
 Copyright (c) 2022 Javier Escalada Gómez  
 All rights reserved.
-License: BSD 3-Clause Clear License (see LICENSE for details)
+License: BSD 3-Clause Clear License
 """
 
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.0.2"
+__version__ = "0.2.0"
 __license__ = "BSD 3-Clause Clear License"
 ~~~
 
@@ -102,6 +102,38 @@ def extract_blocks(lines):
                 block["txt"].append((linenum, raw_line.removeprefix(block_indent)))
 ~~~
 
+# Parsing references
+
+To be able to walk properly the code blocks, so we can emit the final source code, we need to parse the references.
+
+~~~ python main.py parse_references
+def parse_references(blocks):
+    for block in blocks:
+        ref_pattern = LANG_REF_PATTERNS[block["lang"]]
+        for i in range(len(block["txt"])):
+            linenum, line = block["txt"][i]
+            if m := ref_pattern.match(line):
+                indent, name = m.groups()
+                block["txt"][i] = (linenum, (indent, name.strip()))
+        yield block
+~~~
+
+`LANG_REF_PATTERNS` is a dictionary that maps languages to regular expressions that match references to other code blocks.
+
+~~~ python main.py reference_patterns
+REF_PATTERN = re.compile(r'<<<(.+)>>>')
+PYTHON_REF_PATTERN = re.compile(r'( *)#[ \t]*' + REF_PATTERN.pattern)
+C_REF_PATTERN = re.compile(r'( *)//[ \t]*' + REF_PATTERN.pattern)
+LANG_REF_PATTERNS = {
+    "python": PYTHON_REF_PATTERN,
+    "py": PYTHON_REF_PATTERN,
+    "c": C_REF_PATTERN,
+    "cpp": C_REF_PATTERN,
+    "go": C_REF_PATTERN,
+}
+~~~
+
+
 # Indexing code blocks
 
 We also need to index the code blocks so that we can find them by their description.
@@ -125,12 +157,11 @@ def walk_blocks(src_block, dst_blocks, input_filename):
 
     src_lang = src_block["lang"]
     src_filename = src_block["filename"]
-    ref_pattern = LANG_REF_PATTERNS[src_lang]
 
     yield line_directive(src_block["beg"])
     for linenum, src_line in src_block["txt"]:
-        if m := ref_pattern.match(src_line):
-            dst_indent, dst_name = m.groups()
+        if isinstance(src_line, tuple): 
+            dst_indent, dst_name = src_line
             dst_block = dst_blocks[(src_filename, dst_name.strip())]
             if dst_block == src_block:
                 raise ValueError(f"detected self-reference in {input_filename} at line {linenum}")
@@ -142,21 +173,6 @@ def walk_blocks(src_block, dst_blocks, input_filename):
             yield dst_indent + line_directive(linenum)
         else:
             yield src_line
-~~~
-
-`LANG_REF_PATTERNS` is a dictionary that maps languages to regular expressions that match references to other code blocks.
-
-~~~ python main.py reference_patterns
-REF_PATTERN = re.compile(r'<<<(.+)>>>')
-PYTHON_REF_PATTERN = re.compile(r'( *)#[ \t]*' + REF_PATTERN.pattern)
-C_REF_PATTERN = re.compile(r'( *)//[ \t]*' + REF_PATTERN.pattern)
-LANG_REF_PATTERNS = {
-    "python": PYTHON_REF_PATTERN,
-    "py": PYTHON_REF_PATTERN,
-    "c": C_REF_PATTERN,
-    "cpp": C_REF_PATTERN,
-    "go": C_REF_PATTERN,
-}
 ~~~
 
 # Warning message
@@ -270,7 +286,7 @@ def pinfo(msg):
 def run(args):
     pinfo(f"Reading {CDIM}{args.input}{CEND}")
     with open(args.input, encoding=args.encoding) as f:
-        blocks = index_blocks(extract_blocks(label_lines(f)))
+        blocks = index_blocks(parse_references(extract_blocks(label_lines(f))))
     if args.dump:
         name, ext = os.path.splitext(args.input)
         with open(name + ".json", "w", encoding=args.encoding) as f:
@@ -292,7 +308,6 @@ def run(args):
             with open(filename, "w", encoding=args.encoding) as f:
                 for l in compose_warning_message(args.input, block["lang"]):
                     f.write(l)
-                f.write("\n\n")
                 try:
                     for l in walk_blocks(block, blocks, args.input):
                         f.write(l)
@@ -304,6 +319,7 @@ def run(args):
 
 <!--
 ~~~ python main.py main
+# -*- coding: utf-8 -*-
 # <<< prelude >>>
 
 import re
@@ -323,6 +339,8 @@ import json
 # <<< label_markdown_lines >>>
 
 # <<< extract_blocks >>>
+
+# <<< parse_references >>>
 
 # <<< index_blocks >>>
 
@@ -350,9 +368,13 @@ if __name__ == "__main__":
 ~~~
 
 ~~~ python script.py main
-
-# Copyright (c) 2022 Javier Escalada Gómez
-# All rights reserved.
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2022 Javier Escalada Gómez  
+All rights reserved.
+License: BSD 3-Clause Clear License
+"""
 
 from litterateur import main
 
