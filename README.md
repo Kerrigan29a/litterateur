@@ -11,7 +11,7 @@ License: BSD 3-Clause Clear License
 
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __license__ = "BSD 3-Clause Clear License"
 ~~~
 
@@ -107,6 +107,9 @@ def extract_blocks(lines):
 To be able to walk properly the code blocks, so we can emit the final source code, we need to parse the references.
 
 ~~~ python main.py parse_references
+def make_ref(filename, desc):
+    return filename + ":" + desc
+
 def parse_references(blocks):
     for block in blocks:
         ref_pattern = LANG_REF_PATTERNS[block["lang"]]
@@ -114,7 +117,7 @@ def parse_references(blocks):
             linenum, line = block["txt"][i]
             if m := ref_pattern.match(line):
                 indent, name = m.groups()
-                block["txt"][i] = (linenum, (indent, name.strip()))
+                block["txt"][i] = (linenum, (indent, make_ref(block["filename"], name.strip())))
         yield block
 ~~~
 
@@ -142,7 +145,7 @@ We also need to index the code blocks so that we can find them by their descript
 def index_blocks(blocks):
     index = {}
     for block in blocks:
-        index[(block["filename"], block["desc"])] = block
+        index[make_ref(block["filename"], block["desc"])] = block
     return index
 ~~~
 
@@ -161,8 +164,8 @@ def walk_blocks(src_block, dst_blocks, input_filename):
     yield line_directive(src_block["beg"])
     for linenum, src_line in src_block["txt"]:
         if isinstance(src_line, tuple): 
-            dst_indent, dst_name = src_line
-            dst_block = dst_blocks[(src_filename, dst_name.strip())]
+            dst_indent, dst_ref = src_line
+            dst_block = dst_blocks[dst_ref]
             if dst_block == src_block:
                 raise ValueError(f"detected self-reference in {input_filename} at line {linenum}")
             dst_lang = dst_block["lang"]
@@ -283,16 +286,31 @@ def pwarning(msg):
 def pinfo(msg):
     print(f"{CGREEN}   INFO{CEND} - {msg}")
 
+if CustomJSONEncoder is not None:
+    def indent_hint(path, collection, indent, width):
+        if len(collection) == 0:
+            return False
+        if len(path) == 0:
+            return True
+        if path[-1] in ["txt"]:
+            return True
+        return False
+
 def run(args):
     pinfo(f"Reading {CDIM}{args.input}{CEND}")
     with open(args.input, encoding=args.encoding) as f:
         blocks = index_blocks(parse_references(extract_blocks(label_lines(f))))
     if args.dump:
         with open(args.input + ".json", "w", encoding=args.encoding) as f:
-            tmp = {":".join(k): v for k, v in blocks.items()}
-            kwargs = {"cls": CustomJSONEncoder, "width": 80} if CustomJSONEncoder else {}
-            json.dump(tmp, f, indent=2, **kwargs)
-    for (filename, desc), block in blocks.items():
+            kwargs = {
+                "cls": CustomJSONEncoder,
+                "width": 120,
+                "indent_hint": indent_hint,
+            } if CustomJSONEncoder is not None else {}
+            json.dump(blocks, f, indent=2, **kwargs)
+    for block in blocks.values():
+        filename = block["filename"]
+        desc = block["desc"]    
         if desc.lower() == "main":
             filename = args.rename.get(filename, filename)
             if os.path.exists(filename):

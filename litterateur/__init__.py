@@ -1,6 +1,6 @@
 # Code generated from README.md; DO NOT EDIT.
 # Command used: litterateur.py README.md
-#line README.md:322
+#line README.md:340
 # -*- coding: utf-8 -*-
 #line README.md:4
 """
@@ -13,9 +13,9 @@ License: BSD 3-Clause Clear License
 
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.2.1"
+__version__ = "0.4.0"
 __license__ = "BSD 3-Clause Clear License"
-#line README.md:324
+#line README.md:342
 
 import re
 import sys
@@ -30,9 +30,9 @@ except ImportError:
 #line README.md:33
 FENCE = re.compile(r'( {0,3})(`{3,}|~{3,})(.*)')
 OPT = re.compile(r' *(\S+)')
-#line README.md:336
+#line README.md:354
 
-#line README.md:124
+#line README.md:127
 REF_PATTERN = re.compile(r'<<<(.+)>>>')
 PYTHON_REF_PATTERN = re.compile(r'( *)#[ \t]*' + REF_PATTERN.pattern)
 C_REF_PATTERN = re.compile(r'( *)//[ \t]*' + REF_PATTERN.pattern)
@@ -43,9 +43,9 @@ LANG_REF_PATTERNS = {
     "cpp": C_REF_PATTERN,
     "go": C_REF_PATTERN,
 }
-#line README.md:338
+#line README.md:356
 
-#line README.md:199
+#line README.md:202
 PYTHON_COMMENT_FORMAT = "# {0}"
 C_COMMENT_FORMAT = "// {0}"
 LANG_COMMENT_FORMATS = {
@@ -55,9 +55,9 @@ LANG_COMMENT_FORMATS = {
     "cpp": C_COMMENT_FORMAT,
     "go": C_COMMENT_FORMAT,
 }
-#line README.md:340
+#line README.md:358
 
-#line README.md:221
+#line README.md:224
 PYTHON_MAP_FORMAT = "#line {file}:{line}"
 C_MAP_FORMAT = "#line {line} {file}"
 GO_MAP_FORMAT = "//line {file}:{line}"
@@ -68,7 +68,7 @@ LANG_LINE_FORMATS = {
     "cpp": C_MAP_FORMAT,
     "go": GO_MAP_FORMAT,
 }
-#line README.md:342
+#line README.md:360
 
 #line README.md:51
 def label_lines(f):
@@ -96,7 +96,7 @@ def label_lines(f):
             yield ("CODE", l, i+1)
         else:
             yield ("TEXT", l, i+1)
-#line README.md:344
+#line README.md:362
 
 #line README.md:81
 def extract_blocks(lines):
@@ -121,9 +121,12 @@ def extract_blocks(lines):
                 block_indent = None
             case ("CODE", raw_line, linenum):
                 block["txt"].append((linenum, raw_line.removeprefix(block_indent)))
-#line README.md:346
+#line README.md:364
 
 #line README.md:110
+def make_ref(filename, desc):
+    return filename + ":" + desc
+
 def parse_references(blocks):
     for block in blocks:
         ref_pattern = LANG_REF_PATTERNS[block["lang"]]
@@ -131,26 +134,26 @@ def parse_references(blocks):
             linenum, line = block["txt"][i]
             if m := ref_pattern.match(line):
                 indent, name = m.groups()
-                block["txt"][i] = (linenum, (indent, name.strip()))
+                block["txt"][i] = (linenum, (indent, make_ref(block["filename"], name.strip())))
         yield block
-#line README.md:348
+#line README.md:366
 
-#line README.md:142
+#line README.md:145
 def index_blocks(blocks):
     index = {}
     for block in blocks:
-        index[(block["filename"], block["desc"])] = block
+        index[make_ref(block["filename"], block["desc"])] = block
     return index
-#line README.md:350
+#line README.md:368
 
-#line README.md:154
+#line README.md:157
 def walk_blocks(src_block, dst_blocks, input_filename):
 
-    #line README.md:213
+    #line README.md:216
     line_format = LANG_LINE_FORMATS[src_block["lang"]]
     def line_directive(line):
         return line_format.format(file=input_filename, line=line+1) + "\n"
-    #line README.md:157
+    #line README.md:160
 
     src_lang = src_block["lang"]
     src_filename = src_block["filename"]
@@ -158,8 +161,8 @@ def walk_blocks(src_block, dst_blocks, input_filename):
     yield line_directive(src_block["beg"])
     for linenum, src_line in src_block["txt"]:
         if isinstance(src_line, tuple): 
-            dst_indent, dst_name = src_line
-            dst_block = dst_blocks[(src_filename, dst_name.strip())]
+            dst_indent, dst_ref = src_line
+            dst_block = dst_blocks[dst_ref]
             if dst_block == src_block:
                 raise ValueError(f"detected self-reference in {input_filename} at line {linenum}")
             dst_lang = dst_block["lang"]
@@ -170,16 +173,16 @@ def walk_blocks(src_block, dst_blocks, input_filename):
             yield dst_indent + line_directive(linenum)
         else:
             yield src_line
-#line README.md:352
+#line README.md:370
 
-#line README.md:190
+#line README.md:193
 def compose_warning_message(input, lang):
     comment_format = LANG_COMMENT_FORMATS[lang]
     yield comment_format.format(f"Code generated from {input}; DO NOT EDIT.") + "\n"
     yield comment_format.format(f"Command used: {' '.join(sys.argv)}") + "\n"
-#line README.md:354
+#line README.md:372
 
-#line README.md:239
+#line README.md:242
 class ParseError(Exception):
     pass
 
@@ -206,9 +209,9 @@ def parse_args():
         rename[old] = new
     args.rename = rename
     return args
-#line README.md:356
+#line README.md:374
     
-#line README.md:270
+#line README.md:273
 CRED = "\033[31m"
 CGREEN = "\033[32m"
 CYELLOW = "\033[33m"
@@ -225,16 +228,31 @@ def pwarning(msg):
 def pinfo(msg):
     print(f"{CGREEN}   INFO{CEND} - {msg}")
 
+if CustomJSONEncoder is not None:
+    def indent_hint(path, collection, indent, width):
+        if len(collection) == 0:
+            return False
+        if len(path) == 0:
+            return True
+        if path[-1] in ["txt"]:
+            return True
+        return False
+
 def run(args):
     pinfo(f"Reading {CDIM}{args.input}{CEND}")
     with open(args.input, encoding=args.encoding) as f:
         blocks = index_blocks(parse_references(extract_blocks(label_lines(f))))
     if args.dump:
         with open(args.input + ".json", "w", encoding=args.encoding) as f:
-            tmp = {":".join(k): v for k, v in blocks.items()}
-            kwargs = {"cls": CustomJSONEncoder, "width": 80} if CustomJSONEncoder else {}
-            json.dump(tmp, f, indent=2, **kwargs)
-    for (filename, desc), block in blocks.items():
+            kwargs = {
+                "cls": CustomJSONEncoder,
+                "width": 120,
+                "indent_hint": indent_hint,
+            } if CustomJSONEncoder is not None else {}
+            json.dump(blocks, f, indent=2, **kwargs)
+    for block in blocks.values():
+        filename = block["filename"]
+        desc = block["desc"]    
         if desc.lower() == "main":
             filename = args.rename.get(filename, filename)
             if os.path.exists(filename):
@@ -257,7 +275,7 @@ def run(args):
                     perror(e)
                     return 1
     return 0
-#line README.md:358
+#line README.md:376
 
 def main():
     try:
