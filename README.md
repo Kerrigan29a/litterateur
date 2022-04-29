@@ -1,10 +1,18 @@
 # Litterateur
 
+~~~ python main.py prelude
+"""
+Quick-and-dirty "literate programming" tool to extract code from Markdown files
+
 Copyright (c) 2022 Javier Escalada Gómez  
 All rights reserved.
+License: BSD 3-Clause Clear License (see LICENSE for details)
+"""
 
-~~~ python main.py Prelude
-__version__ = '0.0.1'
+__author__ = "Javier Escalada Gómez"
+__email__ = "kerrigan29a@gmail.com"
+__version__ = "0.0.2"
+__license__ = "BSD 3-Clause Clear License"
 ~~~
 
 This script extracts code from Markdown files following the [literate programming](https://www.johndcook.com/blog/2016/07/06/literate-programming-presenting-code-in-human-order/) approach.
@@ -12,7 +20,7 @@ This script extracts code from Markdown files following the [literate programmin
 It uses a particular format of fenced code blocks to mark the code to extract. The fenced code blocks must also specify the language (used also in Markdown), the file name and a short description of the code that is used to reference it.
 
 ```markdown
-~~~ python dummy.py Short description
+~~~ python dummy.py short_description
 # ...
 # python code
 # ...
@@ -39,7 +47,7 @@ The following function labels each line using the following categories:
 * `"CODE"`: the line is a code line.
 * `"END"`: the line is the end of a code block.
 
-~~~ python main.py Label Markdown lines
+~~~ python main.py label_markdown_lines
 def label_lines(f):
     is_code = False
     is_ignored_code = False
@@ -69,7 +77,7 @@ def label_lines(f):
 
 Once we have the labels, we can extract them. With each `"BEGIN"` line, we create a new block that is populated with the following `"CODE"` lines up to the next `"END"` line. As this script makes the *tangling* process we ignore the `"TEXT"` lines. But this function can also be used to extract the `"TEXT"` lines in the *weaving* process.
 
-~~~ python main.py Extract blocks
+~~~ python main.py extract_blocks
 def extract_blocks(lines):
     block = None
     block_indent = None
@@ -98,7 +106,7 @@ def extract_blocks(lines):
 
 The last step is to index the code blocks so that we can find them by their description.
 
-~~~ python main.py Index blocks
+~~~ python main.py index_blocks
 def index_blocks(blocks):
     index = {}
     for block in blocks:
@@ -110,33 +118,35 @@ def index_blocks(blocks):
 
 The last step to emit the code is to walk the blocks follow the links.
 
-~~~ python main.py Walk blocks
+~~~ python main.py walk_blocks
 def walk_blocks(src_block, dst_blocks, input_filename):
 
-    # <<< Map block >>>
+    # <<< write_line >>>
 
     src_lang = src_block["lang"]
     src_filename = src_block["filename"]
     ref_pattern = LANG_REF_PATTERNS[src_lang]
 
-    yield map(src_block["beg"])
+    yield line_directive(src_block["beg"])
     for linenum, src_line in src_block["txt"]:
         if m := ref_pattern.match(src_line):
             dst_indent, dst_name = m.groups()
             dst_block = dst_blocks[(src_filename, dst_name.strip())]
+            if dst_block == src_block:
+                raise ValueError(f"detected self-reference in {input_filename} at line {linenum}")
             dst_lang = dst_block["lang"]
             if src_lang != dst_lang:
                 raise ValueError(f"language mismatch: {src_lang} != {dst_lang}")
             for l in walk_blocks(dst_block, dst_blocks, input_filename):
                 yield dst_indent + l
-            yield dst_indent + map(linenum)
+            yield dst_indent + line_directive(linenum)
         else:
             yield src_line
 ~~~
 
 `LANG_REF_PATTERNS` is a dictionary that maps languages to regular expressions that match references to other code blocks.
 
-~~~ python main.py Reference patterns
+~~~ python main.py reference_patterns
 REF_PATTERN = re.compile(r'<<<(.+)>>>')
 PYTHON_REF_PATTERN = re.compile(r'( *)#[ \t]*' + REF_PATTERN.pattern)
 C_REF_PATTERN = re.compile(r'( *)//[ \t]*' + REF_PATTERN.pattern)
@@ -160,7 +170,7 @@ This tool uses the regular expression:
 
 from the [Go command documentation](https://pkg.go.dev/cmd/go#hdr-Generate_Go_files_by_processing_source).
 
-~~~ python main.py Compose warning message
+~~~ python main.py compose_warning_message
 def compose_warning_message(input, lang):
     comment_format = LANG_COMMENT_FORMATS[lang]
     yield comment_format.format(f"Code generated from {input}; DO NOT EDIT.") + "\n"
@@ -169,7 +179,7 @@ def compose_warning_message(input, lang):
 
 `LANG_COMMENT_FORMATS` is a dictionary that maps languages to the format of the their comment.
 
-~~~ python main.py Comment formats
+~~~ python main.py comment_formats
 PYTHON_COMMENT_FORMAT = "# {0}"
 C_COMMENT_FORMAT = "// {0}"
 LANG_COMMENT_FORMATS = {
@@ -183,19 +193,19 @@ LANG_COMMENT_FORMATS = {
 
 # Mapping the generated code with the original Markdown file
 
-~~~ python main.py Map block
-map_format = LANG_MAP_FORMATS[src_block["lang"]]
-def map(line):
-    return map_format.format(file=input_filename, line=line+1) + "\n"
+~~~ python main.py write_line
+line_format = LANG_LINE_FORMATS[src_block["lang"]]
+def line_directive(line):
+    return line_format.format(file=input_filename, line=line+1) + "\n"
 ~~~
 
-`LANG_MAP_FORMATS` is a dictionary that maps languages to the format of the their line directives.
+`LANG_LINE_FORMATS` is a dictionary that maps languages to the format of the their line directives.
 
-~~~ python main.py Map formats
+~~~ python main.py line_formats
 PYTHON_MAP_FORMAT = "#line {file}:{line}"
 C_MAP_FORMAT = "#line {line} {file}"
 GO_MAP_FORMAT = "//line {file}:{line}"
-LANG_MAP_FORMATS = {
+LANG_LINE_FORMATS = {
     "python": PYTHON_MAP_FORMAT,
     "py": PYTHON_MAP_FORMAT,
     "c": C_MAP_FORMAT,
@@ -209,7 +219,7 @@ LANG_MAP_FORMATS = {
 
 This script is called with the following arguments:
 
-~~~ python main.py Parse arguments
+~~~ python main.py parse_arguments
 class ParseError(Exception):
     pass
 
@@ -224,6 +234,8 @@ def parse_args():
         help="Rename a file in the input Markdown file")
     parser.add_argument("-o", "--overwrite", action='store_true',
         help="Overwrite output files (default: %(default)s)")
+    parser.add_argument("-D", "--dump", action='store_true',
+        help="Dump the internal state(default: %(default)s)")
     args = parser.parse_args()
     rename = {}
     for r in args.rename or []:
@@ -238,80 +250,98 @@ def parse_args():
 
 The run function:
 
-~~~ python main.py Run function
+~~~ python main.py run
+CRED = "\033[31m"
+CGREEN = "\033[32m"
+CYELLOW = "\033[33m"
+CBOLD = "\033[1m"
+CDIM = "\033[2m"
+CEND = "\033[0m"
+
+def perror(msg):
+    print(f"{CRED}  ERROR{CEND} - {msg}")
+
+def pwarning(msg):
+    print(f"{CYELLOW}WARNING{CEND} - {msg}")
+
+def pinfo(msg):
+    print(f"{CGREEN}   INFO{CEND} - {msg}")
+
 def run(args):
-        print("Reading", args.input)
-        with open(args.input, encoding=args.encoding) as f:
-            blocks = index_blocks(extract_blocks(label_lines(f)))
-        for (filename, desc), block in blocks.items():
-            if desc.lower() == "main":
-                filename = args.rename.get(filename, filename)
-                if os.path.exists(filename):
-                    if not args.overwrite:
-                        print(f"ERROR: {filename} already exists.")
-                        print("Skipping", filename)
-                        return 1
-                    else:
-                        print(f"WARNING: {filename} already exists.")
-                        print("Overwriting", filename)
+    pinfo(f"Reading {CDIM}{args.input}{CEND}")
+    with open(args.input, encoding=args.encoding) as f:
+        blocks = index_blocks(extract_blocks(label_lines(f)))
+    if args.dump:
+        name, ext = os.path.splitext(args.input)
+        with open(name + ".json", "w", encoding=args.encoding) as f:
+            tmp = {":".join(k): v for k, v in blocks.items()}
+            json.dump(tmp, f, indent=2)
+    for (filename, desc), block in blocks.items():
+        if desc.lower() == "main":
+            filename = args.rename.get(filename, filename)
+            if os.path.exists(filename):
+                if not args.overwrite:
+                    perror(f"{CDIM}{filename}{CEND} already exists.")
+                    pinfo(f"Skipping {CDIM}{filename}{CEND}")
+                    return 1
                 else:
-                    print("Writing", filename)
-                with open(filename, "w", encoding=args.encoding) as f:
-                    for l in compose_warning_message(args.input, block["lang"]):
+                    pwarning(f"{CDIM}{filename}{CEND} already exists.")
+                    pinfo(f"Overwriting {CDIM}{filename}{CEND}")
+            else:
+                pinfo(f"Writing {CDIM}{filename}{CEND}")
+            with open(filename, "w", encoding=args.encoding) as f:
+                for l in compose_warning_message(args.input, block["lang"]):
+                    f.write(l)
+                f.write("\n\n")
+                try:
+                    for l in walk_blocks(block, blocks, args.input):
                         f.write(l)
-                    f.write("\n\n")
-                    try:
-                        for l in walk_blocks(block, blocks, args.input):
-                            f.write(l)
-                    except ValueError as e:
-                        print(f"ERROR: {e}")
-                        return 1
-        return 0
+                except ValueError as e:
+                    perror(e)
+                    return 1
+    return 0
 ~~~
 
 <!--
-~~~ python main.py Main
-
-# Copyright (c) 2022 Javier Escalada Gómez
-# All rights reserved.
-
-# <<< Prelude >>>
+~~~ python main.py main
+# <<< prelude >>>
 
 import re
 import sys
 import argparse
 import os.path
+import json
 
 # <<< Code block patterns >>>
 
-# <<< Reference patterns >>>
+# <<< reference_patterns >>>
 
-# <<< Comment formats >>>
+# <<< comment_formats >>>
 
-# <<< Map formats >>>
+# <<< line_formats >>>
 
-# <<< Label Markdown lines >>>
+# <<< label_markdown_lines >>>
 
-# <<< Extract blocks >>>
+# <<< extract_blocks >>>
 
-# <<< Index blocks >>>
+# <<< index_blocks >>>
 
-# <<< Walk blocks >>>
+# <<< walk_blocks >>>
 
-# <<< Compose warning message >>>
+# <<< compose_warning_message >>>
 
-# <<< Parse arguments >>>
+# <<< parse_arguments >>>
     
-# <<< Run function >>>
+# <<< run >>>
 
 def main():
     try:
         exit(run(parse_args()))
     except ParseError as e:
-        print(f"ERROR: {e}")
+        perror(e)
     except Exception as e:
         import traceback
-        print(f"ERROR: {e}")
+        perror(e)
         traceback.print_exc()
     exit(1)
 
@@ -319,7 +349,7 @@ if __name__ == "__main__":
     main()
 ~~~
 
-~~~ python script.py Main
+~~~ python script.py main
 
 # Copyright (c) 2022 Javier Escalada Gómez
 # All rights reserved.

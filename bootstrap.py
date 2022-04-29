@@ -1,5 +1,10 @@
-# Copyright (c) 2022 Javier Escalada Gómez
-# All rights reserved.
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2022 Javier Escalada Gómez
+All rights reserved.
+License: BSD 3-Clause Clear License (see LICENSE for details)
+"""
 
 import re
 import sys
@@ -80,5 +85,5 @@ def walk_blocks(src_block, dst_blocks):
 with (open(sys.argv[1], "r", encoding="utf-8") as fin,
         open(sys.argv[2], "w", encoding="utf-8") as fout):
     blocks = index_blocks(extract_blocks(label_lines(fin)))
-    for l in walk_blocks(blocks[("main.py", "Main")], blocks):
+    for l in walk_blocks(blocks[("main.py", "main")], blocks):
         fout.write(l)
