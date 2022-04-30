@@ -235,8 +235,8 @@ if CustomJSONEncoder is not None:
         if len(collection) == 0:
             return False
         if len(path) == 0:
-            return True
-        if path[-1] in ["txt"]:
+            return False
+        if path[-1] in ["blocks", "txt"]:
             return True
         return False
 

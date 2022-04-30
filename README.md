@@ -11,7 +11,7 @@ License: BSD 3-Clause Clear License
 
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.4.1"
+__version__ = "0.4.2"
 __license__ = "BSD 3-Clause Clear License"
 ~~~
 
@@ -293,8 +293,8 @@ if CustomJSONEncoder is not None:
         if len(collection) == 0:
             return False
         if len(path) == 0:
-            return True
-        if path[-1] in ["txt"]:
+            return False
+        if path[-1] in ["blocks", "txt"]:
             return True
         return False
 
