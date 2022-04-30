@@ -13,7 +13,7 @@ License: BSD 3-Clause Clear License
 
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.4.1"
+__version__ = "0.4.3"
 __license__ = "BSD 3-Clause Clear License"
 #line README.md:344
 
