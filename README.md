@@ -11,7 +11,7 @@ License: BSD 3-Clause Clear License
 
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 __license__ = "BSD 3-Clause Clear License"
 ~~~
 
@@ -112,6 +112,7 @@ To be able to walk properly the code blocks, so we can emit the final source cod
 ~~~ python main.py parse_references
 def make_ref(filename, desc):
     return filename + ":" + desc
+
 
 def parse_references(blocks):
     for block in blocks:
@@ -222,6 +223,8 @@ LANG_COMMENT_FORMATS = {
 
 ~~~ python main.py line_directive
 line_format = LANG_LINE_FORMATS[src_block["lang"]]
+
+
 def line_directive(line):
     return line_format.format(file=input_filename, line=line+1) + "\n"
 ~~~
@@ -249,6 +252,7 @@ This script is called with the following arguments:
 ~~~ python main.py parse_arguments
 class ParseError(Exception):
     pass
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -285,24 +289,18 @@ CBOLD = "\033[1m"
 CDIM = "\033[2m"
 CEND = "\033[0m"
 
+
 def perror(msg):
     print(f"{CRED}  ERROR{CEND} - {msg}")
+
 
 def pwarning(msg):
     print(f"{CYELLOW}WARNING{CEND} - {msg}")
 
+
 def pinfo(msg):
     print(f"{CGREEN}   INFO{CEND} - {msg}")
 
-if CustomJSONEncoder is not None:
-    def indent_hint(path, collection, indent, width):
-        if len(collection) == 0:
-            return False
-        if len(path) == 0:
-            return False
-        if path[-1] in ["blocks", "lines"]:
-            return True
-        return False
 
 def run(args):
     pinfo(f"Reading {CDIM}{args.input}{CEND}")
@@ -310,12 +308,7 @@ def run(args):
         blocks = index_blocks(parse_references(extract_blocks(label_lines(f))))
     if args.dump:
         with open(args.input + ".json", "w", encoding=args.encoding) as f:
-            kwargs = {
-                "cls": CustomJSONEncoder,
-                "width": 120,
-                "indent_hint": indent_hint,
-            } if CustomJSONEncoder is not None else {}
-            json.dump({"version": __version__, "blocks": blocks}, f, indent=2, **kwargs)
+            json.dump({"version": __version__, "blocks": blocks}, f, indent=2)
     for block in blocks.values():
         filename = block["filename"]
         desc = block["desc"]    
@@ -354,9 +347,20 @@ import argparse
 import os.path
 import json
 try:
-    from custom_json_encoder import CustomJSONEncoder
+    from custom_json_encoder import __version__ as cje_version, wrap_dump
+    if cje_version != "0.2.0":
+        raise ImportError("custom_json_encoder version must be 0.2.0")
+    def indentation_policy(path, collection, indent, width):
+        if len(collection) == 0:
+            return False
+        if len(path) == 0:
+            return False
+        if path[-1] in ["blocks", "lines"]:
+            return True
+        return False
+    json.dump = wrap_dump(indentation_policy, width=0)
 except ImportError:
-    CustomJSONEncoder = None
+    pass
 
 # <<< Code block patterns >>>
 

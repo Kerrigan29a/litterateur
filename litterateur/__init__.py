@@ -1,6 +1,6 @@
 # Code generated from README.md; DO NOT EDIT.
 # Command used: litterateur.py README.md
-#line README.md:348
+#line README.md:341
 # -*- coding: utf-8 -*-
 #line README.md:4
 """
@@ -13,9 +13,9 @@ License: BSD 3-Clause Clear License
 
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 __license__ = "BSD 3-Clause Clear License"
-#line README.md:350
+#line README.md:343
 
 import re
 import sys
@@ -23,16 +23,27 @@ import argparse
 import os.path
 import json
 try:
-    from custom_json_encoder import CustomJSONEncoder
+    from custom_json_encoder import __version__ as cje_version, wrap_dump
+    if cje_version != "0.2.0":
+        raise ImportError("custom_json_encoder version must be 0.2.0")
+    def indentation_policy(path, collection, indent, width):
+        if len(collection) == 0:
+            return False
+        if len(path) == 0:
+            return False
+        if path[-1] in ["blocks", "lines"]:
+            return True
+        return False
+    json.dump = wrap_dump(indentation_policy, width=0)
 except ImportError:
-    CustomJSONEncoder = None
+    pass
 
 #line README.md:33
 FENCE = re.compile(r'( {0,3})(`{3,}|~{3,})(.*)')
 OPT = re.compile(r' *(\S+)')
-#line README.md:362
+#line README.md:366
 
-#line README.md:134
+#line README.md:135
 REF_PATTERN = re.compile(r'<<<(.+)>>>')
 PYTHON_REF_PATTERN = re.compile(r'( *)#[ \t]*' + REF_PATTERN.pattern)
 C_REF_PATTERN = re.compile(r'( *)//[ \t]*' + REF_PATTERN.pattern)
@@ -43,9 +54,9 @@ LANG_REF_PATTERNS = {
     "cpp": C_REF_PATTERN,
     "go": C_REF_PATTERN,
 }
-#line README.md:364
+#line README.md:368
 
-#line README.md:210
+#line README.md:211
 PYTHON_COMMENT_FORMAT = "# {0}"
 C_COMMENT_FORMAT = "// {0}"
 LANG_COMMENT_FORMATS = {
@@ -55,9 +66,9 @@ LANG_COMMENT_FORMATS = {
     "cpp": C_COMMENT_FORMAT,
     "go": C_COMMENT_FORMAT,
 }
-#line README.md:366
+#line README.md:370
 
-#line README.md:232
+#line README.md:235
 PYTHON_MAP_FORMAT = "#line {file}:{line}"
 C_MAP_FORMAT = "#line {line} {file}"
 GO_MAP_FORMAT = "//line {file}:{line}"
@@ -68,7 +79,7 @@ LANG_LINE_FORMATS = {
     "cpp": C_MAP_FORMAT,
     "go": GO_MAP_FORMAT,
 }
-#line README.md:368
+#line README.md:372
 
 #line README.md:51
 def label_lines(f):
@@ -96,7 +107,7 @@ def label_lines(f):
             yield ("CODE", l, i+1)
         else:
             yield ("TEXT", l, i+1)
-#line README.md:370
+#line README.md:374
 
 #line README.md:81
 def extract_blocks(lines):
@@ -124,11 +135,12 @@ def extract_blocks(lines):
                     "row": row,
                     "txt": raw_line.removeprefix(block_indent)
                 })
-#line README.md:372
+#line README.md:376
 
 #line README.md:113
 def make_ref(filename, desc):
     return filename + ":" + desc
+
 
 def parse_references(blocks):
     for block in blocks:
@@ -143,24 +155,26 @@ def parse_references(blocks):
                     "ref": make_ref(block["filename"], name.strip()),
                 }
         yield block
-#line README.md:374
+#line README.md:378
 
-#line README.md:152
+#line README.md:153
 def index_blocks(blocks):
     index = {}
     for block in blocks:
         index[make_ref(block["filename"], block["desc"])] = block
     return index
-#line README.md:376
+#line README.md:380
 
-#line README.md:164
+#line README.md:165
 def walk_blocks(src_block, dst_blocks, input_filename):
 
-    #line README.md:224
+    #line README.md:225
     line_format = LANG_LINE_FORMATS[src_block["lang"]]
+    
+    
     def line_directive(line):
         return line_format.format(file=input_filename, line=line+1) + "\n"
-    #line README.md:167
+    #line README.md:168
 
     src_lang = src_block["lang"]
     src_filename = src_block["filename"]
@@ -181,18 +195,19 @@ def walk_blocks(src_block, dst_blocks, input_filename):
         else:
             # Is a normal line
             yield src_line["txt"]
-#line README.md:378
+#line README.md:382
 
-#line README.md:201
+#line README.md:202
 def compose_warning_message(input, lang):
     comment_format = LANG_COMMENT_FORMATS[lang]
     yield comment_format.format(f"Code generated from {input}; DO NOT EDIT.") + "\n"
     yield comment_format.format(f"Command used: {' '.join(sys.argv)}") + "\n"
-#line README.md:380
+#line README.md:384
 
-#line README.md:250
+#line README.md:253
 class ParseError(Exception):
     pass
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -217,9 +232,9 @@ def parse_args():
         rename[old] = new
     args.rename = rename
     return args
-#line README.md:382
+#line README.md:386
     
-#line README.md:281
+#line README.md:285
 CRED = "\033[31m"
 CGREEN = "\033[32m"
 CYELLOW = "\033[33m"
@@ -227,24 +242,18 @@ CBOLD = "\033[1m"
 CDIM = "\033[2m"
 CEND = "\033[0m"
 
+
 def perror(msg):
     print(f"{CRED}  ERROR{CEND} - {msg}")
+
 
 def pwarning(msg):
     print(f"{CYELLOW}WARNING{CEND} - {msg}")
 
+
 def pinfo(msg):
     print(f"{CGREEN}   INFO{CEND} - {msg}")
 
-if CustomJSONEncoder is not None:
-    def indent_hint(path, collection, indent, width):
-        if len(collection) == 0:
-            return False
-        if len(path) == 0:
-            return False
-        if path[-1] in ["blocks", "lines"]:
-            return True
-        return False
 
 def run(args):
     pinfo(f"Reading {CDIM}{args.input}{CEND}")
@@ -252,12 +261,7 @@ def run(args):
         blocks = index_blocks(parse_references(extract_blocks(label_lines(f))))
     if args.dump:
         with open(args.input + ".json", "w", encoding=args.encoding) as f:
-            kwargs = {
-                "cls": CustomJSONEncoder,
-                "width": 120,
-                "indent_hint": indent_hint,
-            } if CustomJSONEncoder is not None else {}
-            json.dump({"version": __version__, "blocks": blocks}, f, indent=2, **kwargs)
+            json.dump({"version": __version__, "blocks": blocks}, f, indent=2)
     for block in blocks.values():
         filename = block["filename"]
         desc = block["desc"]    
@@ -283,7 +287,7 @@ def run(args):
                     perror(e)
                     return 1
     return 0
-#line README.md:384
+#line README.md:388
 
 def main():
     try:
