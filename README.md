@@ -11,7 +11,7 @@ License: BSD 3-Clause Clear License
 
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.4.3"
+__version__ = "0.5.0"
 __license__ = "BSD 3-Clause Clear License"
 ~~~
 
@@ -83,23 +83,26 @@ def extract_blocks(lines):
     block_indent = None
     for line in lines:
         match line:
-            case ("BEGIN", indent, lang, filename, desc, _, linenum):
+            case ("BEGIN", indent, lang, filename, desc, _, row):
                 block = {
-                    "beg": linenum,
+                    "beg": row,
                     "end": None,
-                    "txt": [],
+                    "lines": [],
                     "lang": lang,
                     "filename": filename,
                     "desc": desc,
                 }
                 block_indent = indent
-            case ("END", _, linenum):
-                block["end"] = linenum
+            case ("END", _, row):
+                block["end"] = row
                 yield block
                 block = None
                 block_indent = None
-            case ("CODE", raw_line, linenum):
-                block["txt"].append((linenum, raw_line.removeprefix(block_indent)))
+            case ("CODE", raw_line, row):
+                block["lines"].append({
+                    "row": row,
+                    "txt": raw_line.removeprefix(block_indent)
+                })
 ~~~
 
 # Parsing references
@@ -113,14 +116,15 @@ def make_ref(filename, desc):
 def parse_references(blocks):
     for block in blocks:
         ref_pattern = LANG_REF_PATTERNS[block["lang"]]
-        for i in range(len(block["txt"])):
-            linenum, line = block["txt"][i]
-            if m := ref_pattern.match(line):
+        for i in range(len(block["lines"])):
+            line = block["lines"][i]
+            if m := ref_pattern.match(line["txt"]):
                 indent, name = m.groups()
-                block["txt"][i] = (linenum, {
+                block["lines"][i] = {
+                    **line,
                     "indent": indent,
-                    "ref": make_ref(block["filename"], name.strip())
-                })
+                    "ref": make_ref(block["filename"], name.strip()),
+                }
         yield block
 ~~~
 
@@ -165,19 +169,21 @@ def walk_blocks(src_block, dst_blocks, input_filename):
     src_filename = src_block["filename"]
 
     yield line_directive(src_block["beg"])
-    for linenum, src_line in src_block["txt"]:
-        if isinstance(src_line, dict): 
+    for src_line in src_block["lines"]:
+        src_row = src_line["row"]
+        if "ref" in src_line:
+            # Is a reference
             dst_block = dst_blocks[src_line["ref"]]
             if dst_block == src_block:
-                raise ValueError(f"detected self-reference in {input_filename} at line {linenum}")
-            dst_lang = dst_block["lang"]
-            if src_lang != dst_lang:
-                raise ValueError(f"language mismatch: {src_lang} != {dst_lang}")
+                raise ValueError(f"detected self-reference in {input_filename} at line {src_row}")
+            if src_lang != dst_block["lang"]:
+                raise ValueError(f"language mismatch: {src_lang} != {dst_block['lang']}")
             for l in walk_blocks(dst_block, dst_blocks, input_filename):
                 yield src_line["indent"] + l
-            yield src_line["indent"] + line_directive(linenum)
+            yield src_line["indent"] + line_directive(src_row)
         else:
-            yield src_line
+            # Is a normal line
+            yield src_line["txt"]
 ~~~
 
 # Warning message
@@ -294,7 +300,7 @@ if CustomJSONEncoder is not None:
             return False
         if len(path) == 0:
             return False
-        if path[-1] in ["blocks", "txt"]:
+        if path[-1] in ["blocks", "lines"]:
             return True
         return False
 
