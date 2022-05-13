@@ -13,7 +13,7 @@ License: BSD 3-Clause Clear License
 
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.5.1"
+__version__ = "0.5.2"
 __license__ = "BSD 3-Clause Clear License"
 #line README.md:343
 
@@ -21,11 +21,12 @@ import re
 import sys
 import argparse
 import os.path
+from setuptools.extern.packaging import version
 import json
 try:
     from custom_json_encoder import __version__ as cje_version, wrap_dump
-    if cje_version != "0.2.0":
-        raise ImportError("custom_json_encoder version must be 0.2.0")
+    if version.parse(cje_version) != version.parse("0.2"):
+        raise ImportError("custom_json_encoder version must be 0.2")
     def indentation_policy(path, collection, indent, width):
         if len(collection) == 0:
             return False
@@ -41,7 +42,7 @@ except ImportError:
 #line README.md:33
 FENCE = re.compile(r'( {0,3})(`{3,}|~{3,})(.*)')
 OPT = re.compile(r' *(\S+)')
-#line README.md:366
+#line README.md:367
 
 #line README.md:135
 REF_PATTERN = re.compile(r'<<<(.+)>>>')
@@ -54,7 +55,7 @@ LANG_REF_PATTERNS = {
     "cpp": C_REF_PATTERN,
     "go": C_REF_PATTERN,
 }
-#line README.md:368
+#line README.md:369
 
 #line README.md:211
 PYTHON_COMMENT_FORMAT = "# {0}"
@@ -66,7 +67,7 @@ LANG_COMMENT_FORMATS = {
     "cpp": C_COMMENT_FORMAT,
     "go": C_COMMENT_FORMAT,
 }
-#line README.md:370
+#line README.md:371
 
 #line README.md:235
 PYTHON_MAP_FORMAT = "#line {file}:{line}"
@@ -79,7 +80,7 @@ LANG_LINE_FORMATS = {
     "cpp": C_MAP_FORMAT,
     "go": GO_MAP_FORMAT,
 }
-#line README.md:372
+#line README.md:373
 
 #line README.md:51
 def label_lines(f):
@@ -107,7 +108,7 @@ def label_lines(f):
             yield ("CODE", l, i+1)
         else:
             yield ("TEXT", l, i+1)
-#line README.md:374
+#line README.md:375
 
 #line README.md:81
 def extract_blocks(lines):
@@ -135,7 +136,7 @@ def extract_blocks(lines):
                     "row": row,
                     "txt": raw_line.removeprefix(block_indent)
                 })
-#line README.md:376
+#line README.md:377
 
 #line README.md:113
 def make_ref(filename, desc):
@@ -155,7 +156,7 @@ def parse_references(blocks):
                     "ref": make_ref(block["filename"], name.strip()),
                 }
         yield block
-#line README.md:378
+#line README.md:379
 
 #line README.md:153
 def index_blocks(blocks):
@@ -163,7 +164,7 @@ def index_blocks(blocks):
     for block in blocks:
         index[make_ref(block["filename"], block["desc"])] = block
     return index
-#line README.md:380
+#line README.md:381
 
 #line README.md:165
 def walk_blocks(src_block, dst_blocks, input_filename):
@@ -195,14 +196,14 @@ def walk_blocks(src_block, dst_blocks, input_filename):
         else:
             # Is a normal line
             yield src_line["txt"]
-#line README.md:382
+#line README.md:383
 
 #line README.md:202
 def compose_warning_message(input, lang):
     comment_format = LANG_COMMENT_FORMATS[lang]
     yield comment_format.format(f"Code generated from {input}; DO NOT EDIT.") + "\n"
     yield comment_format.format(f"Command used: {' '.join(sys.argv)}") + "\n"
-#line README.md:384
+#line README.md:385
 
 #line README.md:253
 class ParseError(Exception):
@@ -232,7 +233,7 @@ def parse_args():
         rename[old] = new
     args.rename = rename
     return args
-#line README.md:386
+#line README.md:387
     
 #line README.md:285
 CRED = "\033[31m"
@@ -287,7 +288,7 @@ def run(args):
                     perror(e)
                     return 1
     return 0
-#line README.md:388
+#line README.md:389
 
 def main():
     try:

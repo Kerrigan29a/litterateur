@@ -11,7 +11,7 @@ License: BSD 3-Clause Clear License
 
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.5.1"
+__version__ = "0.5.2"
 __license__ = "BSD 3-Clause Clear License"
 ~~~
 
@@ -345,11 +345,12 @@ import re
 import sys
 import argparse
 import os.path
+from setuptools.extern.packaging import version
 import json
 try:
     from custom_json_encoder import __version__ as cje_version, wrap_dump
-    if cje_version != "0.2.0":
-        raise ImportError("custom_json_encoder version must be 0.2.0")
+    if version.parse(cje_version) != version.parse("0.2"):
+        raise ImportError("custom_json_encoder version must be 0.2")
     def indentation_policy(path, collection, indent, width):
         if len(collection) == 0:
             return False
