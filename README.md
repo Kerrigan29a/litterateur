@@ -3,15 +3,15 @@
 ~~~ python main.py prelude
 """
 Quick-and-dirty "literate programming" tool to extract code from Markdown files
-
-Copyright (c) 2022 Javier Escalada Gómez  
-All rights reserved.
-License: BSD 3-Clause Clear License
 """
+
+# Copyright (c) 2022 Javier Escalada Gómez  
+# All rights reserved.
+# License: BSD 3-Clause Clear License
 
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.5.3"
+__version__ = "0.5.4"
 __license__ = "BSD 3-Clause Clear License"
 ~~~
 
@@ -29,7 +29,7 @@ It uses a particular format of fenced code blocks to mark the code to extract. T
 
 **WARNING**: To find these code blocks, we use the following regular expressions:
 
-~~~ python main.py Code block patterns
+~~~ python main.py code_block_patterns
 FENCE = re.compile(r'( {0,3})(`{3,}|~{3,})(.*)')
 OPT = re.compile(r' *(\S+)')
 ~~~
@@ -306,9 +306,11 @@ def run(args):
     pinfo(f"Reading {CDIM}{args.input}{CEND}")
     with open(args.input, encoding=args.encoding) as f:
         blocks = index_blocks(parse_references(extract_blocks(label_lines(f))))
+
     if args.dump:
         with open(args.input + ".json", "w", encoding=args.encoding) as f:
             json.dump({"version": __version__, "blocks": blocks}, f, indent=2)
+    
     for block in blocks.values():
         filename = block["filename"]
         desc = block["desc"]    
@@ -338,7 +340,9 @@ def run(args):
 
 <!--
 ~~~ python main.py main
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 # <<< prelude >>>
 
 import re
@@ -367,7 +371,7 @@ except ValueError as e:
 except ImportError:
     pass
 
-# <<< Code block patterns >>>
+# <<< code_block_patterns >>>
 
 # <<< reference_patterns >>>
 
@@ -409,11 +413,10 @@ if __name__ == "__main__":
 ~~~ python script.py main
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Copyright (c) 2022 Javier Escalada Gómez  
-All rights reserved.
-License: BSD 3-Clause Clear License
-"""
+
+# Copyright (c) 2022 Javier Escalada Gómez  
+# All rights reserved.
+# License: BSD 3-Clause Clear License
 
 from litterateur import main
 

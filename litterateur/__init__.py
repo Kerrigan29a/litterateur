@@ -1,21 +1,23 @@
 # Code generated from README.md; DO NOT EDIT.
 # Command used: litterateur.py README.md
-#line README.md:341
+#line README.md:343
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 #line README.md:4
 """
 Quick-and-dirty "literate programming" tool to extract code from Markdown files
-
-Copyright (c) 2022 Javier Escalada Gómez  
-All rights reserved.
-License: BSD 3-Clause Clear License
 """
+
+# Copyright (c) 2022 Javier Escalada Gómez  
+# All rights reserved.
+# License: BSD 3-Clause Clear License
 
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.5.3"
+__version__ = "0.5.4"
 __license__ = "BSD 3-Clause Clear License"
-#line README.md:343
+#line README.md:347
 
 import re
 import sys
@@ -46,7 +48,7 @@ except ImportError:
 #line README.md:33
 FENCE = re.compile(r'( {0,3})(`{3,}|~{3,})(.*)')
 OPT = re.compile(r' *(\S+)')
-#line README.md:371
+#line README.md:375
 
 #line README.md:135
 REF_PATTERN = re.compile(r'<<<(.+)>>>')
@@ -59,7 +61,7 @@ LANG_REF_PATTERNS = {
     "cpp": C_REF_PATTERN,
     "go": C_REF_PATTERN,
 }
-#line README.md:373
+#line README.md:377
 
 #line README.md:211
 PYTHON_COMMENT_FORMAT = "# {0}"
@@ -71,7 +73,7 @@ LANG_COMMENT_FORMATS = {
     "cpp": C_COMMENT_FORMAT,
     "go": C_COMMENT_FORMAT,
 }
-#line README.md:375
+#line README.md:379
 
 #line README.md:235
 PYTHON_MAP_FORMAT = "#line {file}:{line}"
@@ -84,7 +86,7 @@ LANG_LINE_FORMATS = {
     "cpp": C_MAP_FORMAT,
     "go": GO_MAP_FORMAT,
 }
-#line README.md:377
+#line README.md:381
 
 #line README.md:51
 def label_lines(f):
@@ -112,7 +114,7 @@ def label_lines(f):
             yield ("CODE", l, i+1)
         else:
             yield ("TEXT", l, i+1)
-#line README.md:379
+#line README.md:383
 
 #line README.md:81
 def extract_blocks(lines):
@@ -140,7 +142,7 @@ def extract_blocks(lines):
                     "row": row,
                     "txt": raw_line.removeprefix(block_indent)
                 })
-#line README.md:381
+#line README.md:385
 
 #line README.md:113
 def make_ref(filename, desc):
@@ -160,7 +162,7 @@ def parse_references(blocks):
                     "ref": make_ref(block["filename"], name.strip()),
                 }
         yield block
-#line README.md:383
+#line README.md:387
 
 #line README.md:153
 def index_blocks(blocks):
@@ -168,7 +170,7 @@ def index_blocks(blocks):
     for block in blocks:
         index[make_ref(block["filename"], block["desc"])] = block
     return index
-#line README.md:385
+#line README.md:389
 
 #line README.md:165
 def walk_blocks(src_block, dst_blocks, input_filename):
@@ -200,14 +202,14 @@ def walk_blocks(src_block, dst_blocks, input_filename):
         else:
             # Is a normal line
             yield src_line["txt"]
-#line README.md:387
+#line README.md:391
 
 #line README.md:202
 def compose_warning_message(input, lang):
     comment_format = LANG_COMMENT_FORMATS[lang]
     yield comment_format.format(f"Code generated from {input}; DO NOT EDIT.") + "\n"
     yield comment_format.format(f"Command used: {' '.join(sys.argv)}") + "\n"
-#line README.md:389
+#line README.md:393
 
 #line README.md:253
 class ParseError(Exception):
@@ -237,7 +239,7 @@ def parse_args():
         rename[old] = new
     args.rename = rename
     return args
-#line README.md:391
+#line README.md:395
     
 #line README.md:285
 CRED = "\033[31m"
@@ -264,9 +266,11 @@ def run(args):
     pinfo(f"Reading {CDIM}{args.input}{CEND}")
     with open(args.input, encoding=args.encoding) as f:
         blocks = index_blocks(parse_references(extract_blocks(label_lines(f))))
+
     if args.dump:
         with open(args.input + ".json", "w", encoding=args.encoding) as f:
             json.dump({"version": __version__, "blocks": blocks}, f, indent=2)
+    
     for block in blocks.values():
         filename = block["filename"]
         desc = block["desc"]    
@@ -292,7 +296,7 @@ def run(args):
                     perror(e)
                     return 1
     return 0
-#line README.md:393
+#line README.md:397
 
 def main():
     try:
