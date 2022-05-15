@@ -11,7 +11,7 @@ License: BSD 3-Clause Clear License
 
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.5.2"
+__version__ = "0.5.3"
 __license__ = "BSD 3-Clause Clear License"
 ~~~
 
@@ -349,8 +349,8 @@ from setuptools.extern.packaging import version
 import json
 try:
     from custom_json_encoder import __version__ as cje_version, wrap_dump
-    if version.parse(cje_version) != version.parse("0.2"):
-        raise ImportError("custom_json_encoder version must be 0.2")
+    if not version.parse("0.2") <= version.parse(cje_version) < version.parse("0.3"):
+        raise ValueError(f"custom_json_encoder version must be 0.2, but is {cje_version}")
     def indentation_policy(path, collection, indent, width):
         if len(collection) == 0:
             return False
@@ -360,6 +360,10 @@ try:
             return True
         return False
     json.dump = wrap_dump(indentation_policy, width=0)
+except ValueError as e:
+    import warnings
+    warnings.warn(str(e))
+    warnings.warn("Disabling custom_json_encoder usage")
 except ImportError:
     pass
 

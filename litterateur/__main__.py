@@ -1,6 +1,6 @@
 # Code generated from README.md; DO NOT EDIT.
 # Command used: litterateur.py README.md
-#line README.md:406
+#line README.md:410
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
