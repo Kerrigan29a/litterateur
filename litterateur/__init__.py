@@ -21,7 +21,7 @@ from Markdown files.
 #line README.md:18
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 __license__ = "BSD 3-Clause Clear License"
 #line README.md:577
 
@@ -33,18 +33,19 @@ import os.path
 from setuptools.extern.packaging import version
 import json
 try:
-    from custom_json_encoder import __version__ as cje_version, wrap_dump
-    if not version.parse("0.2") <= version.parse(cje_version) < version.parse("0.3"):
-        raise ValueError(f"custom_json_encoder version must be 0.2, but is {cje_version}")
+    from custom_json_encoder import __version__ as cje_version, wrap_dump, wrap_dumps
+    if not version.parse("0.3") <= version.parse(cje_version) < version.parse("0.4"):
+        raise ValueError(f"custom_json_encoder version must be 0.3, but is {cje_version}")
     def indentation_policy(path, collection, indent, width):
         if len(collection) == 0:
             return False
         if len(path) == 0:
             return False
-        if path[-1] in ["blocks", "lines"]:
+        if path[-1] in ["blocks", "args", "lines"]:
             return True
         return False
     json.dump = wrap_dump(indentation_policy, width=0)
+    json.dumps = wrap_dumps(indentation_policy, width=0)
 except ValueError as e:
     import warnings
     warnings.warn(str(e))
@@ -83,7 +84,7 @@ class BlockArgumentParser(argparse.ArgumentParser):
     def error(self, msg):
         raise BlockArgumentError(self.format_help(), msg)
 #line README.md:110
-#line README.md:606
+#line README.md:607
 #line README.md:115
 def label_lines(f):
 #line README.md:286
@@ -140,7 +141,7 @@ def label_lines(f):
             yield ("HEADING", indent, level, text, line)
         else:
             yield ("TEXT", line)
-#line README.md:606
+#line README.md:607
 
 #line README.md:151
 def extract_blocks(lines):
@@ -170,7 +171,7 @@ def extract_blocks(lines):
                 name = text
             case ("TEXT", _):
                 name = None
-#line README.md:608
+#line README.md:609
 
 #line README.md:214
 #line README.md:193
@@ -245,7 +246,7 @@ class RefArgumentError(Exception):
 class RefArgumentParser(argparse.ArgumentParser):
     def error(self, msg):
         raise BlockArgumentError(self.format_help(), msg)
-#line README.md:610
+#line README.md:611
 
 #line README.md:303
 def index_blocks(blocks):
@@ -268,7 +269,7 @@ def index_blocks(blocks):
             index[block["name"]] = [block]
             last_named = block
     return index
-#line README.md:612
+#line README.md:613
 
 #line README.md:331
 #line README.md:413
@@ -368,7 +369,7 @@ def format(steps, filename, lang):
                 yield from format(steps, filename, lang)
             case _:
                 raise AssertionError(f"Unknown step: {step}")
-#line README.md:614
+#line README.md:615
 
 #line README.md:451
 #line README.md:464
@@ -388,7 +389,7 @@ def compose_warning_message(input, lang):
     yield comment_format.format(f"Code generated from {input}; DO NOT EDIT.") + "\n"
     yield comment_format.format(f"Command used: {' '.join(sys.argv)}") + "\n"
     yield "\n"
-#line README.md:616
+#line README.md:617
 
 #line README.md:480
 class ParseError(Exception):
@@ -425,7 +426,7 @@ from Markdown files.
     del args.selection
     args.selections = renames
     return args
-#line README.md:618
+#line README.md:619
     
 #line README.md:513
 CRED = "\033[31m"
@@ -481,7 +482,7 @@ def run(args):
                 perror(e)
                 return 1
     return 0
-#line README.md:620
+#line README.md:621
 
 def main():
     try:

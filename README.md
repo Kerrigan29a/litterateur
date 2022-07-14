@@ -17,7 +17,7 @@ from Markdown files.
 ~~~ python
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 __license__ = "BSD 3-Clause Clear License"
 ~~~
 
@@ -583,18 +583,19 @@ import os.path
 from setuptools.extern.packaging import version
 import json
 try:
-    from custom_json_encoder import __version__ as cje_version, wrap_dump
-    if not version.parse("0.2") <= version.parse(cje_version) < version.parse("0.3"):
-        raise ValueError(f"custom_json_encoder version must be 0.2, but is {cje_version}")
+    from custom_json_encoder import __version__ as cje_version, wrap_dump, wrap_dumps
+    if not version.parse("0.3") <= version.parse(cje_version) < version.parse("0.4"):
+        raise ValueError(f"custom_json_encoder version must be 0.3, but is {cje_version}")
     def indentation_policy(path, collection, indent, width):
         if len(collection) == 0:
             return False
         if len(path) == 0:
             return False
-        if path[-1] in ["blocks", "lines"]:
+        if path[-1] in ["blocks", "args", "lines"]:
             return True
         return False
     json.dump = wrap_dump(indentation_policy, width=0)
+    json.dumps = wrap_dumps(indentation_policy, width=0)
 except ValueError as e:
     import warnings
     warnings.warn(str(e))
