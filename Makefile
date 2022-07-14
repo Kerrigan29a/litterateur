@@ -29,21 +29,21 @@ test: litterateur/main_1.py litterateur/main_2.py
 
 build: test
 	mv litterateur/main_1.py litterateur/__init__.py
-	sed 's/\/main_.\.py .*$$/\.py README\.md/' litterateur/script.py > litterateur/__main__.py
+	sed 's/litterateur\/main_.\.py .*$$/..\/bootstrap\.py ..\/README\.md/' litterateur/script.py > litterateur/__main__.py
 	rm litterateur/script.py
 	rm litterateur/main_2.py litterateur/main_0.py
 	printf "# WARNING: DO NOT EDIT ANY FILE IN THIS FOLDER\n" > litterateur/README.md
-	head -n 2 litterateur/__init__.py | sed 's/^# //; s/; DO NOT EDIT./  /' >> litterateur/README.md
+	head -n 5 litterateur/__init__.py | tail -n 2 | sed -e 's/^# //; s/; DO NOT EDIT./  /'  -e 's/\(\.\.\/.*\) \(\.\.\/.*\)/\[\1\]\(\1\) \[\2\]\(\2\)/'>> litterateur/README.md
 
 litterateur/main_2.py: litterateur/main_1.py README.md
-	python3 $^ -r main.py:$@ -r script.py:litterateur/script.py -o -D
-	sed 's/\/main_.\.py .*$$/\.py README\.md/' $@ > $(@:.py=.tmp.py)
+	python3 $^ main.py:$@ script.py:litterateur/script.py -o -D
+	sed 's/litterateur\/main_.\.py .*$$/..\/bootstrap\.py ..\/README\.md/' $@ > $(@:.py=.tmp.py)
 	rm $@
 	mv $(@:.py=.tmp.py) $@
 
 litterateur/main_1.py: litterateur/main_0.py README.md
-	python3 $^ -r main.py:$@ -r script.py:litterateur/script.py -o -D
-	sed 's/\/main_.\.py .*$$/\.py README\.md/' $@ > $(@:.py=.tmp.py)
+	python3 $^ main.py:$@ script.py:litterateur/script.py -o -D
+	sed 's/litterateur\/main_.\.py .*$$/..\/bootstrap\.py ..\/README\.md/' $@ > $(@:.py=.tmp.py)
 	rm $@
 	mv $(@:.py=.tmp.py) $@
 
