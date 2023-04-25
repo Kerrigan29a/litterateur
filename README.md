@@ -17,7 +17,7 @@ from Markdown files.
 ~~~ python
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.6.1"
+__version__ = "0.7.0"
 __license__ = "BSD 3-Clause Clear License"
 ~~~
 
@@ -347,6 +347,7 @@ def walk_blocks(src_block, index, filename, is_root=True, prev_indents=None):
     yield ("LOCATION", src_block["beg"] + 1)
 
     for prefix in src_block_args.prefixes:
+        yield ("INDENT", prev_indents)
         yield ("TXT", prefix + "\n")
 
     for src_line in src_block["lines"]:
@@ -368,6 +369,7 @@ def walk_blocks(src_block, index, filename, is_root=True, prev_indents=None):
             yield ("TXT", src_line["txt"])
     
     for suffix in src_block_args.suffixes:
+        yield ("INDENT", prev_indents)
         yield ("TXT", suffix + "\n")
 
 

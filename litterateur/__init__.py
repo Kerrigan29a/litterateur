@@ -4,26 +4,26 @@
 # Code generated from README.md; DO NOT EDIT.
 # Command used: ../bootstrap.py ../README.md
 
-#line README.md:572
+#line README.md:574
 #line README.md:5
 # Copyright (c) 2022 Javier Escalada Gómez  
 # All rights reserved.
 # License: BSD 3-Clause Clear License
-#line README.md:573
+#line README.md:575
 
 #line README.md:12
 """
 Litterateur is a quick-and-dirty "literate programming" tool to extract code
 from Markdown files.
 """
-#line README.md:575
+#line README.md:577
 
 #line README.md:18
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.6.1"
+__version__ = "0.7.0"
 __license__ = "BSD 3-Clause Clear License"
-#line README.md:577
+#line README.md:579
 
 import re
 import sys
@@ -84,7 +84,7 @@ class BlockArgumentParser(argparse.ArgumentParser):
     def error(self, msg):
         raise BlockArgumentError(self.format_help(), msg)
 #line README.md:110
-#line README.md:607
+#line README.md:609
 #line README.md:115
 def label_lines(f):
 #line README.md:286
@@ -141,7 +141,7 @@ def label_lines(f):
             yield ("HEADING", indent, level, text, line)
         else:
             yield ("TEXT", line)
-#line README.md:607
+#line README.md:609
 
 #line README.md:151
 def extract_blocks(lines):
@@ -171,7 +171,7 @@ def extract_blocks(lines):
                 name = text
             case ("TEXT", _):
                 name = None
-#line README.md:609
+#line README.md:611
 
 #line README.md:214
 #line README.md:193
@@ -246,7 +246,7 @@ class RefArgumentError(Exception):
 class RefArgumentParser(argparse.ArgumentParser):
     def error(self, msg):
         raise BlockArgumentError(self.format_help(), msg)
-#line README.md:611
+#line README.md:613
 
 #line README.md:303
 def index_blocks(blocks):
@@ -269,10 +269,10 @@ def index_blocks(blocks):
             index[block["name"]] = [block]
             last_named = block
     return index
-#line README.md:613
+#line README.md:615
 
 #line README.md:331
-#line README.md:413
+#line README.md:415
 def inject_args(dst_block, src_line, index, args):
     d = {}
     for i, arg in enumerate(args):
@@ -317,6 +317,7 @@ def walk_blocks(src_block, index, filename, is_root=True, prev_indents=None):
     yield ("LOCATION", src_block["beg"] + 1)
 
     for prefix in src_block_args.prefixes:
+        yield ("INDENT", prev_indents)
         yield ("TXT", prefix + "\n")
 
     for src_line in src_block["lines"]:
@@ -338,10 +339,11 @@ def walk_blocks(src_block, index, filename, is_root=True, prev_indents=None):
             yield ("TXT", src_line["txt"])
     
     for suffix in src_block_args.suffixes:
+        yield ("INDENT", prev_indents)
         yield ("TXT", suffix + "\n")
 
 
-#line README.md:397
+#line README.md:399
 PYTHON_MAP_FORMAT = "#line {file}:{line}"
 C_MAP_FORMAT = '#line {line} "{file}"'
 GO_MAP_FORMAT = "//line {file}:{line}"
@@ -352,7 +354,7 @@ LANG_LINE_FORMATS = {
     "cpp": C_MAP_FORMAT,
     "go": GO_MAP_FORMAT,
 }
-#line README.md:375
+#line README.md:377
 
 
 def format(steps, filename, lang):
@@ -369,10 +371,10 @@ def format(steps, filename, lang):
                 yield from format(steps, filename, lang)
             case _:
                 raise AssertionError(f"Unknown step: {step}")
-#line README.md:615
+#line README.md:617
 
-#line README.md:451
-#line README.md:464
+#line README.md:453
+#line README.md:466
 PYTHON_COMMENT_FORMAT = "# {0}"
 C_COMMENT_FORMAT = "// {0}"
 LANG_COMMENT_FORMATS = {
@@ -382,16 +384,16 @@ LANG_COMMENT_FORMATS = {
     "cpp": C_COMMENT_FORMAT,
     "go": C_COMMENT_FORMAT,
 }
-#line README.md:452
+#line README.md:454
 
 def compose_warning_message(input, lang):
     comment_format = LANG_COMMENT_FORMATS[lang]
     yield comment_format.format(f"Code generated from {input}; DO NOT EDIT.") + "\n"
     yield comment_format.format(f"Command used: {' '.join(sys.argv)}") + "\n"
     yield "\n"
-#line README.md:617
+#line README.md:619
 
-#line README.md:480
+#line README.md:482
 class ParseError(Exception):
     pass
 
@@ -403,7 +405,7 @@ def parse_args():
 Litterateur is a quick-and-dirty "literate programming" tool to extract code
 from Markdown files.
 """
-#line README.md:487
+#line README.md:489
 )
     parser.add_argument("input", metavar='FILE',
         help="Input Markdown file")
@@ -426,9 +428,9 @@ from Markdown files.
     del args.selection
     args.selections = renames
     return args
-#line README.md:619
+#line README.md:621
     
-#line README.md:513
+#line README.md:515
 CRED = "\033[31m"
 CGREEN = "\033[32m"
 CYELLOW = "\033[33m"
@@ -482,7 +484,7 @@ def run(args):
                 perror(e)
                 return 1
     return 0
-#line README.md:621
+#line README.md:623
 
 def main():
     try:
