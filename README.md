@@ -17,7 +17,7 @@ from Markdown files.
 ~~~ python
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 __license__ = "BSD 3-Clause Clear License"
 ~~~
 
@@ -510,30 +510,47 @@ def parse_args():
     return args
 ~~~
 
+###### ANSI color support
+~~~ python
+def _check_ansi_support(stream) -> bool:
+    # From https://docs.python.org/3.13/using/cmdline.html#controlling-color
+    # PYTHON_COLORS > NO_COLOR > FORCE_COLOR > TERM=dumb > isatty
+    if (pc := os.environ.get("PYTHON_COLORS")) in ("0", "1"): return pc == "1"
+    if "NO_COLOR" in os.environ: return False
+    if "FORCE_COLOR" in os.environ: return True
+    if os.environ.get("TERM") == "dumb": return False
+    return hasattr(stream, "isatty") and stream.isatty()
+
+_OUT_OK = _check_ansi_support(sys.stdout)
+_ERR_OK = _check_ansi_support(sys.stderr)
+
+def _set_ansi_code(code):
+    return (code if _OUT_OK else ""), (code if _ERR_OK else "")
+
+OF_RED, EF_RED = _set_ansi_code("\033[31m")
+OF_GREEN, EF_GREEN = _set_ansi_code("\033[32m")
+OF_YELLOW, EF_YELLOW = _set_ansi_code("\033[33m")
+O_BOLD, E_BOLD = _set_ansi_code("\033[1m")
+O_DIM, E_DIM = _set_ansi_code("\033[1m")
+O_RESET, E_RESET = _set_ansi_code("\033[0m")
+~~~
+
 ###### Run
 ~~~ python
-CRED = "\033[31m"
-CGREEN = "\033[32m"
-CYELLOW = "\033[33m"
-CBOLD = "\033[1m"
-CDIM = "\033[2m"
-CEND = "\033[0m"
-
-
 def perror(msg):
-    print(f"{CRED}  ERROR{CEND} - {msg}")
+    print(f"{OF_RED}  ERROR{O_RESET} - {msg}")
 
 
 def pwarning(msg):
-    print(f"{CYELLOW}WARNING{CEND} - {msg}")
+    print(f"{OF_YELLOW}WARNING{O_RESET} - {msg}")
 
 
 def pinfo(msg):
-    print(f"{CGREEN}   INFO{CEND} - {msg}")
+    print(f"{OF_GREEN}   INFO{O_RESET} - {msg}")
 
 
 def run(args):
-    pinfo(f"Reading {CDIM}{args.input}{CEND}")
+    pinfo(f"Reading {O_DIM}{args.input}{O_RESET}")
     with open(args.input, encoding=args.encoding) as f:
         index = index_blocks(parse_references(extract_blocks(label_lines(f))))
 
@@ -547,14 +564,14 @@ def run(args):
         filename = args.selections[filename]
         if os.path.exists(filename):
             if not args.overwrite:
-                perror(f"{CDIM}{filename}{CEND} already exists.")
-                pinfo(f"Skipping {CDIM}{filename}{CEND}")
+                perror(f"{O_DIM}{filename}{O_RESET} already exists.")
+                pinfo(f"Skipping {O_DIM}{filename}{O_RESET}")
                 return 1
             else:
-                pwarning(f"{CDIM}{filename}{CEND} already exists.")
-                pinfo(f"Overwriting {CDIM}{filename}{CEND}")
+                pwarning(f"{O_DIM}{filename}{O_RESET} already exists.")
+                pinfo(f"Overwriting {O_DIM}{filename}{O_RESET}")
         else:
-            pinfo(f"Writing {CDIM}{filename}{CEND}")
+            pinfo(f"Writing {O_DIM}{filename}{O_RESET}")
         with open(filename, "w", encoding=args.encoding) as f:
             try:
                 for block in blocks:
@@ -582,28 +599,7 @@ import sys
 import shlex
 import argparse
 import os.path
-from setuptools.extern.packaging import version
 import json
-try:
-    from custom_json_encoder import __version__ as cje_version, wrap_dump, wrap_dumps
-    if not version.parse("0.3") <= version.parse(cje_version) < version.parse("0.4"):
-        raise ValueError(f"custom_json_encoder version must be 0.3, but is {cje_version}")
-    def indentation_policy(path, collection, indent, width):
-        if len(collection) == 0:
-            return False
-        if len(path) == 0:
-            return False
-        if path[-1] in ["blocks", "args", "lines"]:
-            return True
-        return False
-    json.dump = wrap_dump(indentation_policy, width=0)
-    json.dumps = wrap_dumps(indentation_policy, width=0)
-except ValueError as e:
-    import warnings
-    warnings.warn(str(e))
-    warnings.warn("Disabling custom_json_encoder usage")
-except ImportError:
-    pass
 
 #<< Label Markdown lines >>
 
@@ -618,6 +614,8 @@ except ImportError:
 #<< Compose the warning message >>
 
 #<< Parse arguments >>
+
+#<< ANSI color support >>
     
 #<< Run >>
 

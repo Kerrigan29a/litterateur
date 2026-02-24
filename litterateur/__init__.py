@@ -4,54 +4,33 @@
 # Code generated from README.md; DO NOT EDIT.
 # Command used: ../bootstrap.py ../README.md
 
-#line README.md:574
+#line README.md:591
 #line README.md:5
 # Copyright (c) 2022 Javier Escalada Gómez  
 # All rights reserved.
 # License: BSD 3-Clause Clear License
-#line README.md:575
+#line README.md:592
 
 #line README.md:12
 """
 Litterateur is a quick-and-dirty "literate programming" tool to extract code
 from Markdown files.
 """
-#line README.md:577
+#line README.md:594
 
 #line README.md:18
 __author__ = "Javier Escalada Gómez"
 __email__ = "kerrigan29a@gmail.com"
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 __license__ = "BSD 3-Clause Clear License"
-#line README.md:579
+#line README.md:596
 
 import re
 import sys
 import shlex
 import argparse
 import os.path
-from setuptools.extern.packaging import version
 import json
-try:
-    from custom_json_encoder import __version__ as cje_version, wrap_dump, wrap_dumps
-    if not version.parse("0.3") <= version.parse(cje_version) < version.parse("0.4"):
-        raise ValueError(f"custom_json_encoder version must be 0.3, but is {cje_version}")
-    def indentation_policy(path, collection, indent, width):
-        if len(collection) == 0:
-            return False
-        if len(path) == 0:
-            return False
-        if path[-1] in ["blocks", "args", "lines"]:
-            return True
-        return False
-    json.dump = wrap_dump(indentation_policy, width=0)
-    json.dumps = wrap_dumps(indentation_policy, width=0)
-except ValueError as e:
-    import warnings
-    warnings.warn(str(e))
-    warnings.warn("Disabling custom_json_encoder usage")
-except ImportError:
-    pass
 
 #line README.md:109
 #line README.md:67
@@ -84,7 +63,7 @@ class BlockArgumentParser(argparse.ArgumentParser):
     def error(self, msg):
         raise BlockArgumentError(self.format_help(), msg)
 #line README.md:110
-#line README.md:609
+#line README.md:605
 #line README.md:115
 def label_lines(f):
 #line README.md:286
@@ -141,7 +120,7 @@ def label_lines(f):
             yield ("HEADING", indent, level, text, line)
         else:
             yield ("TEXT", line)
-#line README.md:609
+#line README.md:605
 
 #line README.md:151
 def extract_blocks(lines):
@@ -171,7 +150,7 @@ def extract_blocks(lines):
                 name = text
             case ("TEXT", _):
                 name = None
-#line README.md:611
+#line README.md:607
 
 #line README.md:214
 #line README.md:193
@@ -246,7 +225,7 @@ class RefArgumentError(Exception):
 class RefArgumentParser(argparse.ArgumentParser):
     def error(self, msg):
         raise BlockArgumentError(self.format_help(), msg)
-#line README.md:613
+#line README.md:609
 
 #line README.md:303
 def index_blocks(blocks):
@@ -269,7 +248,7 @@ def index_blocks(blocks):
             index[block["name"]] = [block]
             last_named = block
     return index
-#line README.md:615
+#line README.md:611
 
 #line README.md:331
 #line README.md:415
@@ -371,7 +350,7 @@ def format(steps, filename, lang):
                 yield from format(steps, filename, lang)
             case _:
                 raise AssertionError(f"Unknown step: {step}")
-#line README.md:617
+#line README.md:613
 
 #line README.md:453
 #line README.md:466
@@ -391,7 +370,7 @@ def compose_warning_message(input, lang):
     yield comment_format.format(f"Code generated from {input}; DO NOT EDIT.") + "\n"
     yield comment_format.format(f"Command used: {' '.join(sys.argv)}") + "\n"
     yield "\n"
-#line README.md:619
+#line README.md:615
 
 #line README.md:482
 class ParseError(Exception):
@@ -428,31 +407,47 @@ from Markdown files.
     del args.selection
     args.selections = renames
     return args
-#line README.md:621
-    
+#line README.md:617
+
 #line README.md:515
-CRED = "\033[31m"
-CGREEN = "\033[32m"
-CYELLOW = "\033[33m"
-CBOLD = "\033[1m"
-CDIM = "\033[2m"
-CEND = "\033[0m"
+def _check_ansi_support(stream) -> bool:
+    # From https://docs.python.org/3.13/using/cmdline.html#controlling-color
+    # PYTHON_COLORS > NO_COLOR > FORCE_COLOR > TERM=dumb > isatty
+    if (pc := os.environ.get("PYTHON_COLORS")) in ("0", "1"): return pc == "1"
+    if "NO_COLOR" in os.environ: return False
+    if "FORCE_COLOR" in os.environ: return True
+    if os.environ.get("TERM") == "dumb": return False
+    return hasattr(stream, "isatty") and stream.isatty()
 
+_OUT_OK = _check_ansi_support(sys.stdout)
+_ERR_OK = _check_ansi_support(sys.stderr)
 
+def _set_ansi_code(code):
+    return (code if _OUT_OK else ""), (code if _ERR_OK else "")
+
+OF_RED, EF_RED = _set_ansi_code("\033[31m")
+OF_GREEN, EF_GREEN = _set_ansi_code("\033[32m")
+OF_YELLOW, EF_YELLOW = _set_ansi_code("\033[33m")
+O_BOLD, E_BOLD = _set_ansi_code("\033[1m")
+O_DIM, E_DIM = _set_ansi_code("\033[1m")
+O_RESET, E_RESET = _set_ansi_code("\033[0m")
+#line README.md:619
+    
+#line README.md:540
 def perror(msg):
-    print(f"{CRED}  ERROR{CEND} - {msg}")
+    print(f"{OF_RED}  ERROR{O_RESET} - {msg}")
 
 
 def pwarning(msg):
-    print(f"{CYELLOW}WARNING{CEND} - {msg}")
+    print(f"{OF_YELLOW}WARNING{O_RESET} - {msg}")
 
 
 def pinfo(msg):
-    print(f"{CGREEN}   INFO{CEND} - {msg}")
+    print(f"{OF_GREEN}   INFO{O_RESET} - {msg}")
 
 
 def run(args):
-    pinfo(f"Reading {CDIM}{args.input}{CEND}")
+    pinfo(f"Reading {O_DIM}{args.input}{O_RESET}")
     with open(args.input, encoding=args.encoding) as f:
         index = index_blocks(parse_references(extract_blocks(label_lines(f))))
 
@@ -466,14 +461,14 @@ def run(args):
         filename = args.selections[filename]
         if os.path.exists(filename):
             if not args.overwrite:
-                perror(f"{CDIM}{filename}{CEND} already exists.")
-                pinfo(f"Skipping {CDIM}{filename}{CEND}")
+                perror(f"{O_DIM}{filename}{O_RESET} already exists.")
+                pinfo(f"Skipping {O_DIM}{filename}{O_RESET}")
                 return 1
             else:
-                pwarning(f"{CDIM}{filename}{CEND} already exists.")
-                pinfo(f"Overwriting {CDIM}{filename}{CEND}")
+                pwarning(f"{O_DIM}{filename}{O_RESET} already exists.")
+                pinfo(f"Overwriting {O_DIM}{filename}{O_RESET}")
         else:
-            pinfo(f"Writing {CDIM}{filename}{CEND}")
+            pinfo(f"Writing {O_DIM}{filename}{O_RESET}")
         with open(filename, "w", encoding=args.encoding) as f:
             try:
                 for block in blocks:
@@ -484,7 +479,7 @@ def run(args):
                 perror(e)
                 return 1
     return 0
-#line README.md:623
+#line README.md:621
 
 def main():
     try:
